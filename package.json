@@ -1,7 +1,0 @@
-{
-  "name": "poppys-http",
-  "version": "1.0.0",
-  "description": "Simple HTTP request sender with detailed errors",
-  "main": "api/send.js",
-  "dependencies": {}
-}
