@@ -232,6 +232,7 @@ function getErrorExplanation(statusCode, host) {
         case 403: return `Forbidden: Authenticated context established successfully, but your specific credentials lack operational permission flags to access pathways on ${host}.`;
         case 404: return `Not Found: The explicit target resource path requested does not exist or has been permanently moved from the server directory trees at ${host}.`;
         case 405: return 'Method Not Allowed: The destination resource path maps correctly, but refuses transactions utilizing this specific request method.';
+        case 418: return 'why are we trying to brew coffee on a teapot gng';
         case 429: return 'Too Many Requests: Rate limiting thresholds have been exceeded. The target platform is throttling operations from this gateway origin.';
         case 500: return `Internal Server Error: The remote application code execution framework at ${host} crashed or encountered a systemic configuration fault while generating a response.`;
         case 502: return 'Bad Gateway: An intermediate proxy routing layer or load balancer received an invalid, unreadable packet reply from upstream cluster elements.';
