@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>poppy's http</title>
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --border: #334155;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #38bdf8;
+            --warning: #eab308;
+            --danger: #ef4444;
+            --success: #22c55e;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: var(--bg-main); color: var(--text); padding: 2rem; }
+        .container { max-width: 1100px; margin: 0 auto; }
+        header { margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem; }
+        h1 { font-size: 1.75rem; color: var(--primary); font-weight: 600; }
+        .warning-banner { background: rgba(234, 179, 8, 0.15); border: 1px solid var(--warning); color: var(--warning); padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem; display: none; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; }
+        h2 { font-size: 1.1rem; margin-bottom: 1rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+        .form-group { margin-bottom: 1.25rem; }
+        label { display: block; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted); }
+        .row-inputs { display: flex; gap: 0.5rem; }
+        select, input, textarea { width: 100%; background: var(--bg-main); border: 1px solid var(--border); color: var(--text); padding: 0.6rem; border-radius: 4px; font-size: 0.95rem; }
+        select:focus, input:focus, textarea:focus { border-color: var(--primary); outline: none; }
+        .dynamic-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
+        .btn { background: var(--primary); color: var(--bg-main); border: none; padding: 0.75rem 1.5rem; border-radius: 4px; font-weight: bold; cursor: pointer; width: 100%; font-size: 1rem; }
+        .btn:hover { opacity: 0.9; }
+        .btn-sec { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 0.4rem 0.8rem; font-size: 0.85rem; width: auto; margin-top: 0.5rem; }
+        .btn-danger { background: transparent; border: 1px solid var(--danger); color: var(--danger); width: auto; padding: 0.6rem; }
+        .auth-fields { display: none; margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed var(--border); }
+        .response-box { background: var(--bg-main); border: 1px solid var(--border); padding: 1rem; border-radius: 4px; font-family: monospace; font-size: 0.9rem; white-space: pre-wrap; overflow-x: auto; max-height: 400px; }
+        .status-badge { display: inline-block; padding: 0.25rem 0.5rem; border-radius: 4px; font-weight: bold; font-size: 0.85rem; margin-bottom: 1rem; }
+        .status-success { background: rgba(34, 197, 94, 0.2); color: var(--success); }
+        .status-error { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+        .error-explanation { background: rgba(239, 68, 68, 0.1); border-left: 4px solid var(--danger); padding: 1rem; margin-bottom: 1rem; border-radius: 0 4px 4px 0; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>poppy's http</h1>
+    </header>
+
+    <div id="binWarning" class="warning-banner">bin urls capture requests but never actually send them to a server!</div>
+
+    <div class="grid">
+        <div class="card">
+            <h2>Request Composer</h2>
+            
+            <div class="form-group">
+                <label>URL (Google API or custom endpoint)</label>
+                <div class="row-inputs">
+                    <select id="method" style="width: 120px;">
+                        <option value="GET">GET</option>
+                        <option value="POST">POST</option>
+                        <option value="PUT">PUT</option>
+                        <option value="DELETE">DELETE</option>
+                        <option value="PATCH">PATCH</option>
+                    </select>
+                    <input type="text" id="url" value="https://www.googleapis.com/discovery/v1/apis" placeholder="https://api.example.com/v1/resource">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Query Parameters</label>
+                <div id="paramsContainer"></div>
+                <button type="button" class="btn btn-sec" onclick="addQueryParamRow()">+ Add Param</button>
+            </div>
+
+            <div class="form-group">
+                <label>Headers</label>
+                <div id="headersContainer"></div>
+                <button type="button" class="btn btn-sec" onclick="addHeaderRow()">+ Add Header</button>
+            </div>
+
+            <div class="form-group">
+                <label>Authentication Profile</label>
+                <select id="authType" onchange="toggleAuthFields()">
+                    <option value="None">None</option>
+                    <option value="Bearer Token">Bearer Token</option>
+                    <option value="Basic Auth">Basic Auth</option>
+                    <option value="API Key">API Key</option>
+                    <option value="OAuth 2.0">OAuth 2.0</option>
+                </select>
+
+                <div id="authBearer" class="auth-fields">
+                    <label>Token</label>
+                    <input type="text" id="authToken" placeholder="secret_token_value">
+                </div>
+
+                <div id="authBasic" class="auth-fields">
+                    <label>Username</label>
+                    <input type="text" id="authUser" placeholder="username" style="margin-bottom: 0.5rem;">
+                    <label>Password</label>
+                    <input type="password" id="authPass" placeholder="password">
+                </div>
+
+                <div id="authApiKey" class="auth-fields">
+                    <label>Key Name</label>
+                    <input type="text" id="authKeyName" placeholder="X-API-Key" style="margin-bottom: 0.5rem;">
+                    <label>Value</label>
+                    <input type="text" id="authKeyValue" placeholder="key_payload_data" style="margin-bottom: 0.5rem;">
+                    <label>Add To</label>
+                    <select id="authKeyAddTo">
+                        <option value="Headers">Headers</option>
+                        <option value="Query Params">Query Params</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Body Type</label>
+                <select id="bodyType" onchange="toggleBodyField()">
+                    <option value="None">None</option>
+                    <option value="JSON">JSON</option>
+                    <option value="Raw Text">Raw Text</option>
+                </select>
+                <div id="bodyContainer" style="display: none; margin-top: 0.5rem;">
+                    <textarea id="bodyData" rows="6" placeholder="{}"></textarea>
+                </div>
+            </div>
+
+            <button class="btn" onclick="executeRequest()">Send Request</button>
+        </div>
+
+        <div class="card">
+            <h2>Execution Hub</h2>
+            <div id="responseStatus"></div>
+            <div id="errorAnalysisContainer"></div>
+            <div id="responseOutput" class="response-box">Configure a request and click Send to analyze output telemetry.</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('url').addEventListener('input', (e) => {
+        const value = e.target.value;
+        const binPatterns = [/bin/i, /mockbin/i, /requestbin/i, /pipedream/i, /webhook/i, /httpbin/i];
+        const isBinUrl = binPatterns.some(pattern => pattern.test(value));
+        document.getElementById('binWarning').style.display = isBinUrl ? 'block' : 'none';
+    });
+
+    function addQueryParamRow() {
+        const container = document.getElementById('paramsContainer');
+        const div = document.createElement('div');
+        div.className = 'dynamic-row';
+        div.innerHTML = `
+            <input type="text" placeholder="key" class="param-key">
+            <input type="text" placeholder="value" class="param-value">
+            <button class="btn btn-danger" onclick="this.parentElement.remove()">X</button>
+        `;
+        container.appendChild(div);
+    }
+
+    function addHeaderRow() {
+        const container = document.getElementById('headersContainer');
+        const div = document.createElement('div');
+        div.className = 'dynamic-row';
+        div.innerHTML = `
+            <input type="text" placeholder="Header-Name" class="header-key">
+            <input type="text" placeholder="value" class="header-value">
+            <button class="btn btn-danger" onclick="this.parentElement.remove()">X</button>
+        `;
+        container.appendChild(div);
+    }
+
+    function toggleAuthFields() {
+        document.querySelectorAll('.auth-fields').forEach(el => el.style.display = 'none');
+        const type = document.getElementById('authType').value;
+        if (type === 'Bearer Token' || type === 'OAuth 2.0') document.getElementById('authBearer').style.display = 'block';
+        if (type === 'Basic Auth') document.getElementById('authBasic').style.display = 'block';
+        if (type === 'API Key') document.getElementById('authApiKey').style.display = 'block';
+    }
+
+    function toggleBodyField() {
+        const type = document.getElementById('bodyType').value;
+        document.getElementById('bodyContainer').style.display = type === 'None' ? 'none' : 'block';
+    }
+
+    async function executeRequest() {
+        const output = document.getElementById('responseOutput');
+        const statusDiv = document.getElementById('responseStatus');
+        const errDiv = document.getElementById('errorAnalysisContainer');
+        
+        output.innerText = "Dispatching transaction frames...";
+        statusDiv.innerHTML = "";
+        errDiv.innerHTML = "";
+
+        const payload = {
+            url: document.getElementById('url').value,
+            method: document.getElementById('method').value,
+            bodyType: document.getElementById('bodyType').value,
+            bodyData: document.getElementById('bodyData').value,
+            params: {},
+            headers: {},
+            auth: { type: document.getElementById('authType').value }
+        };
+
+        document.querySelectorAll('#paramsContainer .dynamic-row').forEach(row => {
+            const k = row.querySelector('.param-key').value;
+            const v = row.querySelector('.param-value').value;
+            if (k) payload.params[k] = v;
+        });
+
+        document.querySelectorAll('#headersContainer .dynamic-row').forEach(row => {
+            const k = row.querySelector('.header-key').value;
+            const v = row.querySelector('.header-value').value;
+            if (k) payload.headers[k] = v;
+        });
+
+        if (payload.auth.type === 'Bearer Token' || payload.auth.type === 'OAuth 2.0') {
+            payload.auth.token = document.getElementById('authToken').value;
+            payload.auth.accessToken = document.getElementById('authToken').value;
+        } else if (payload.auth.type === 'Basic Auth') {
+            payload.auth.username = document.getElementById('authUser').value;
+            payload.auth.password = document.getElementById('authPass').value;
+        } else if (payload.auth.type === 'API Key') {
+            payload.auth.key = document.getElementById('authKeyName').value;
+            payload.auth.value = document.getElementById('authKeyValue').value;
+            payload.auth.addTo = document.getElementById('authKeyAddTo').value;
+        }
+
+        try {
+            const response = await fetch('/api/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                statusDiv.innerHTML = `<span class="status-badge status-error">Local Gateway Rule Blocked Request</span>`;
+                errDiv.innerHTML = `<div class="error-explanation"><strong>${data.error}</strong><p>${data.explanation}</p></div>`;
+                output.innerText = JSON.stringify(data, null, 2);
+                return;
+            }
+
+            const badgeClass = data.status >= 200 && data.status < 300 ? 'status-success' : 'status-error';
+            statusDiv.innerHTML = `<span class="status-badge ${badgeClass}">Status: ${data.status} ${data.statusText || ''}</span>`;
+
+            if (data.errorAnalysis) {
+                errDiv.innerHTML = `<div class="error-explanation"><strong>Downstream Error Interpretation</strong><p>${data.errorAnalysis}</p></div>`;
+            }
+
+            output.innerText = JSON.stringify(data, null, 2);
+
+        } catch (err) {
+            statusDiv.innerHTML = `<span class="status-badge status-error">Network Subsystem Drop</span>`;
+            output.innerText = "Fatal connection collapse interacting with the proxy API pipeline infrastructure.";
+        }
+    }
+</script>
+</body>
+</html>
