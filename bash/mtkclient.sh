@@ -59,27 +59,26 @@ done
 
 echo ""
 echo "CONFIGURE YOUR MTKCLIENT INSTALL"
-echo "(Press spacebar to select)"
 echo ""
 
 USE_PYENV=false
 ADD_DESKTOP=false
 USE_KAMAKIRI=false
 
-read -p "[ ] Install pyenv (recommended to prevent PEP 668): " opt1 < /dev/tty
-if [[ "$opt1" == *" "* ]] || [[ "$opt1" =~ ^[Yy]$ ]]; then
+read -p "Install pyenv (recommended to prevent PEP 668)? [Y/N]: " opt1 < /dev/tty
+if [[ "$opt1" =~ ^[Yy]$ ]]; then
   USE_PYENV=true
   echo "--> Selected: Install pyenv"
 fi
 
-read -p "[ ] Add desktop icon (for mtk_gui): " opt2 < /dev/tty
-if [[ "$opt2" == *" "* ]] || [[ "$opt2" =~ ^[Yy]$ ]]; then
+read -p "Add desktop icon (for mtk_gui)? [Y/N]: " opt2 < /dev/tty
+if [[ "$opt2" =~ ^[Yy]$ ]]; then
   ADD_DESKTOP=true
   echo "--> Selected: Add desktop icon"
 fi
 
-read -p "[ ] Use kamakiri ( < MT6260 ): " opt3 < /dev/tty
-if [[ "$opt3" == *" "* ]] || [[ "$opt3" =~ ^[Yy]$ ]]; then
+read -p "Use kamakiri ( < MT6260 )? [Y/N]: " opt3 < /dev/tty
+if [[ "$opt3" =~ ^[Yy]$ ]]; then
   USE_KAMAKIRI=true
   echo "--> Selected: Use kamakiri"
 fi
