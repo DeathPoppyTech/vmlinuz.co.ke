@@ -90,7 +90,6 @@
       line-height: 1.4;
     }
 
-    /* Modal Styling */
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -189,7 +188,6 @@
       opacity: 1;
     }
 
-    /* Terminal Selector Sub-Menu */
     .terminal-selector {
       display: none;
       flex-direction: column;
@@ -273,6 +271,32 @@
     .back-btn:hover {
       color: var(--text);
     }
+
+    .result-box {
+      margin-top: 1rem;
+      padding: 0.75rem;
+      background-color: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      display: none;
+      line-height: 1.4;
+    }
+
+    .result-box.show {
+      display: block;
+    }
+
+    .cmd-display {
+      background: #000;
+      color: #58a6ff;
+      padding: 0.4rem 0.6rem;
+      border-radius: 4px;
+      font-family: monospace;
+      margin-top: 0.4rem;
+      word-break: break-all;
+    }
   </style>
 </head>
 <body>
@@ -292,7 +316,6 @@
     </main>
   </div>
 
-  <!-- Modal -->
   <div class="modal-overlay" id="modal-overlay">
     <div class="modal">
       <div class="modal-header">
@@ -300,7 +323,6 @@
         <button class="close-btn" id="close-btn">[x]</button>
       </div>
 
-      <!-- Main Options -->
       <div class="modal-options" id="main-options">
         <button class="option-btn" id="open-terminal-btn">
           <span>[open terminal]</span>
@@ -311,13 +333,11 @@
         </button>
       </div>
 
-      <!-- Terminal Choice View -->
       <div class="terminal-selector" id="terminal-selector">
-        <p style="font-size: 0.85rem; color: var(--text-muted);">which terminal emulator do you use?</p>
+        <p style="font-size: 0.85rem; color: var(--text-muted);">select your terminal emulator:</p>
         <div class="term-grid">
           <button class="term-btn" data-term="gnome-terminal">GNOME Terminal</button>
           <button class="term-btn" data-term="kitty">Kitty</button>
-
           <button class="term-btn" data-term="alacritty">Alacritty</button>
           <button class="term-btn" data-term="foot">Foot</button>
           <button class="term-btn" data-term="konsole">Konsole</button>
@@ -328,10 +348,16 @@
 
         <div class="custom-term-input">
           <input type="text" id="custom-term" placeholder="other (e.g. wezterm, st)" />
-          <button id="run-custom-term">Run</button>
+          <button id="run-custom-term">Copy</button>
         </div>
 
         <button class="back-btn" id="back-btn">&larr; Back</button>
+      </div>
+
+      <div class="result-box" id="result-box">
+        <strong style="color: #3fb950;">Command copied to clipboard!</strong><br />
+        Paste it directly into <kbd style="background:#21262d; padding:2px 4px; border-radius:3px;">Alt</kbd> + <kbd style="background:#21262d; padding:2px 4px; border-radius:3px;">F2</kbd> or your runner:
+        <div class="cmd-display" id="cmd-display"></div>
       </div>
     </div>
   </div>
@@ -350,12 +376,15 @@
     const backBtn = document.getElementById('back-btn');
     const customTermInput = document.getElementById('custom-term');
     const runCustomTermBtn = document.getElementById('run-custom-term');
+    const resultBox = document.getElementById('result-box');
+    const cmdDisplay = document.getElementById('cmd-display');
 
     const SCRIPT_CMD = 'curl -sSL https://vmlinuz.co.ke/bash/mtkclient.sh | bash';
 
     const showMainView = () => {
       mainOptions.style.display = 'flex';
       terminalSelector.classList.remove('active');
+      resultBox.classList.remove('show');
       modalTitleText.textContent = 'choose a way to run the script';
     };
 
@@ -393,63 +422,57 @@
       }
     });
 
-    const triggerTerminalLaunch = (termExec) => {
+    const handleTerminalCopy = async (termExec) => {
       let execString = '';
       const cleanTerm = termExec.trim().toLowerCase();
 
       switch (cleanTerm) {
         case 'gnome-terminal':
-          execString = `gnome-terminal -- bash -c "${SCRIPT_CMD}; exec bash"`;
+          execString = `gnome-terminal -- bash -c "${SCRIPT_CMD}"`;
           break;
         case 'kitty':
         case 'alacritty':
         case 'foot':
         case 'ghostty':
         case 'xterm':
-          execString = `${cleanTerm} -e bash -c "${SCRIPT_CMD}; exec bash"`;
+          execString = `${cleanTerm} -e bash -c "${SCRIPT_CMD}"`;
           break;
         case 'konsole':
-          execString = `konsole -e bash -c "${SCRIPT_CMD}; exec bash"`;
+          execString = `konsole -e bash -c "${SCRIPT_CMD}"`;
           break;
         case 'xfce4-terminal':
-          execString = `xfce4-terminal -e "bash -c '${SCRIPT_CMD}; exec bash'"`;
+          execString = `xfce4-terminal -e "bash -c '${SCRIPT_CMD}'"`;
           break;
         default:
-          execString = `${cleanTerm} -e bash -c "${SCRIPT_CMD}; exec bash"`;
+          execString = `${cleanTerm} -e bash -c "${SCRIPT_CMD}"`;
           break;
       }
 
-      const scriptContent = `#!/bin/bash\n${execString}\n`;
-      const blob = new Blob([scriptContent], { type: 'application/x-sh' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `run-mtkclient.sh`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      navigator.clipboard.writeText(SCRIPT_CMD);
-      closeModal();
+      try {
+        await navigator.clipboard.writeText(execString);
+        cmdDisplay.textContent = execString;
+        resultBox.classList.add('show');
+      } catch (err) {
+        console.error('Clipboard error:', err);
+      }
     };
 
     document.querySelectorAll('.term-btn').forEach((btn) => {
       btn.addEventListener('click', (e) => {
         const term = e.target.getAttribute('data-term');
-        triggerTerminalLaunch(term);
+        handleTerminalCopy(term);
       });
     });
 
     runCustomTermBtn.addEventListener('click', () => {
       if (customTermInput.value.trim()) {
-        triggerTerminalLaunch(customTermInput.value.trim());
+        handleTerminalCopy(customTermInput.value.trim());
       }
     });
 
     customTermInput.addEventListener('keypress', (e) => {
       if (e.key === 'Enter' && customTermInput.value.trim()) {
-        triggerTerminalLaunch(customTermInput.value.trim());
+        handleTerminalCopy(customTermInput.value.trim());
       }
     });
   </script>
