@@ -178,15 +178,100 @@
       background-color: #12171f;
     }
 
-    .copied-toast {
+    .status-toast {
       font-size: 0.8rem;
       color: #3fb950;
       opacity: 0;
       transition: opacity 0.2s ease;
     }
 
-    .copied-toast.show {
+    .status-toast.show {
       opacity: 1;
+    }
+
+    /* Terminal Selector Sub-Menu */
+    .terminal-selector {
+      display: none;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-top: 0.5rem;
+    }
+
+    .terminal-selector.active {
+      display: flex;
+    }
+
+    .term-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.5rem;
+    }
+
+    .term-btn {
+      background-color: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.6rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+
+    .term-btn:hover {
+      border-color: var(--accent);
+      color: #ffffff;
+    }
+
+    .custom-term-input {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.25rem;
+    }
+
+    .custom-term-input input {
+      flex: 1;
+      background-color: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 0.85rem;
+    }
+
+    .custom-term-input input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .custom-term-input button {
+      background-color: var(--border);
+      border: none;
+      color: #ffffff;
+      padding: 0.5rem 0.8rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    .custom-term-input button:hover {
+      background-color: var(--accent);
+    }
+
+    .back-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      cursor: pointer;
+      align-self: flex-start;
+      margin-top: 0.5rem;
+    }
+
+    .back-btn:hover {
+      color: var(--text);
     }
   </style>
 </head>
@@ -211,17 +296,42 @@
   <div class="modal-overlay" id="modal-overlay">
     <div class="modal">
       <div class="modal-header">
-        <div class="modal-title">choose a way to run the script</div>
+        <div class="modal-title" id="modal-title-text">choose a way to run the script</div>
         <button class="close-btn" id="close-btn">[x]</button>
       </div>
-      <div class="modal-options">
+
+      <!-- Main Options -->
+      <div class="modal-options" id="main-options">
         <button class="option-btn" id="open-terminal-btn">
           <span>[open terminal]</span>
         </button>
         <button class="option-btn" id="manual-run-btn">
           <span>[manual run]</span>
-          <span class="copied-toast" id="copied-toast">copied!</span>
+          <span class="status-toast" id="copied-toast">copied!</span>
         </button>
+      </div>
+
+      <!-- Terminal Choice View -->
+      <div class="terminal-selector" id="terminal-selector">
+        <p style="font-size: 0.85rem; color: var(--text-muted);">which terminal emulator do you use?</p>
+        <div class="term-grid">
+          <button class="term-btn" data-term="gnome-terminal">GNOME Terminal</button>
+          <button class="term-btn" data-term="kitty">Kitty</button>
+
+          <button class="term-btn" data-term="alacritty">Alacritty</button>
+          <button class="term-btn" data-term="foot">Foot</button>
+          <button class="term-btn" data-term="konsole">Konsole</button>
+          <button class="term-btn" data-term="xfce4-terminal">XFCE Terminal</button>
+          <button class="term-btn" data-term="ghostty">Ghostty</button>
+          <button class="term-btn" data-term="xterm">xterm</button>
+        </div>
+
+        <div class="custom-term-input">
+          <input type="text" id="custom-term" placeholder="other (e.g. wezterm, st)" />
+          <button id="run-custom-term">Run</button>
+        </div>
+
+        <button class="back-btn" id="back-btn">&larr; Back</button>
       </div>
     </div>
   </div>
@@ -230,42 +340,116 @@
     const mtkCard = document.getElementById('mtk-card');
     const modalOverlay = document.getElementById('modal-overlay');
     const closeBtn = document.getElementById('close-btn');
+    const mainOptions = document.getElementById('main-options');
+    const terminalSelector = document.getElementById('terminal-selector');
+    const modalTitleText = document.getElementById('modal-title-text');
+
     const openTerminalBtn = document.getElementById('open-terminal-btn');
     const manualRunBtn = document.getElementById('manual-run-btn');
     const copiedToast = document.getElementById('copied-toast');
+    const backBtn = document.getElementById('back-btn');
+    const customTermInput = document.getElementById('custom-term');
+    const runCustomTermBtn = document.getElementById('run-custom-term');
 
     const SCRIPT_CMD = 'curl -sSL https://vmlinuz.co.ke/bash/mtkclient.sh | bash';
+
+    const showMainView = () => {
+      mainOptions.style.display = 'flex';
+      terminalSelector.classList.remove('active');
+      modalTitleText.textContent = 'choose a way to run the script';
+    };
+
+    const showTerminalView = () => {
+      mainOptions.style.display = 'none';
+      terminalSelector.classList.add('active');
+      modalTitleText.textContent = 'select terminal emulator';
+    };
+
+    const closeModal = () => {
+      modalOverlay.classList.remove('active');
+      setTimeout(showMainView, 200);
+    };
 
     mtkCard.addEventListener('click', () => {
       modalOverlay.classList.add('active');
     });
 
-    closeBtn.addEventListener('click', () => {
-      modalOverlay.classList.remove('active');
-    });
+    closeBtn.addEventListener('click', closeModal);
+    backBtn.addEventListener('click', showMainView);
 
     modalOverlay.addEventListener('click', (e) => {
-      if (e.target === modalOverlay) {
-        modalOverlay.classList.remove('active');
-      }
+      if (e.target === modalOverlay) closeModal();
     });
 
-    openTerminalBtn.addEventListener('click', () => {
-      window.location.href = `x-terminal-emulator://run?command=${encodeURIComponent(SCRIPT_CMD)}`;
-      setTimeout(() => {
-        navigator.clipboard.writeText(SCRIPT_CMD);
-      }, 300);
-    });
+    openTerminalBtn.addEventListener('click', showTerminalView);
 
     manualRunBtn.addEventListener('click', async () => {
       try {
         await navigator.clipboard.writeText(SCRIPT_CMD);
         copiedToast.classList.add('show');
-        setTimeout(() => {
-          copiedToast.classList.remove('show');
-        }, 2000);
+        setTimeout(() => copiedToast.classList.remove('show'), 2000);
       } catch (err) {
-        console.error('Failed to copy text: ', err);
+        console.error('Clipboard error:', err);
+      }
+    });
+
+    const triggerTerminalLaunch = (termExec) => {
+      let execString = '';
+      const cleanTerm = termExec.trim().toLowerCase();
+
+      switch (cleanTerm) {
+        case 'gnome-terminal':
+          execString = `gnome-terminal -- bash -c "${SCRIPT_CMD}; exec bash"`;
+          break;
+        case 'kitty':
+        case 'alacritty':
+        case 'foot':
+        case 'ghostty':
+        case 'xterm':
+          execString = `${cleanTerm} -e bash -c "${SCRIPT_CMD}; exec bash"`;
+          break;
+        case 'konsole':
+          execString = `konsole -e bash -c "${SCRIPT_CMD}; exec bash"`;
+          break;
+        case 'xfce4-terminal':
+          execString = `xfce4-terminal -e "bash -c '${SCRIPT_CMD}; exec bash'"`;
+          break;
+        default:
+          execString = `${cleanTerm} -e bash -c "${SCRIPT_CMD}; exec bash"`;
+          break;
+      }
+
+      const scriptContent = `#!/bin/bash\n${execString}\n`;
+      const blob = new Blob([scriptContent], { type: 'application/x-sh' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `run-mtkclient.sh`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      navigator.clipboard.writeText(SCRIPT_CMD);
+      closeModal();
+    };
+
+    document.querySelectorAll('.term-btn').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        const term = e.target.getAttribute('data-term');
+        triggerTerminalLaunch(term);
+      });
+    });
+
+    runCustomTermBtn.addEventListener('click', () => {
+      if (customTermInput.value.trim()) {
+        triggerTerminalLaunch(customTermInput.value.trim());
+      }
+    });
+
+    customTermInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && customTermInput.value.trim()) {
+        triggerTerminalLaunch(customTermInput.value.trim());
       }
     });
   </script>
