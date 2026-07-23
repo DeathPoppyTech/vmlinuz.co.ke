@@ -67,7 +67,7 @@ USE_PYENV=false
 ADD_DESKTOP=false
 USE_KAMAKIRI=false
 
-read -p "Install pyenv (recommended to prevent PEP 668)? [Y/N]: " opt1 < /dev/tty
+read -p "Install pyenv (recommended to prevent PEP 668)? [Y/N] (say Y to use existing pyenv): " opt1 < /dev/tty
 if [[ "$opt1" =~ ^[Yy]$ ]]; then
   USE_PYENV=true
   echo "--> Selected: Install pyenv"
@@ -91,7 +91,7 @@ if [ "$USE_PYENV" = true ]; then
   if command -v pyenv &> /dev/null || [ -d "$HOME/.pyenv" ]; then
     echo "[ PYENV ] Pyenv already in system, skip step !!"
   else
-    echo "- Install pyenv (recommended to prevent PEP 668) (say Y to use existing pyenv)"
+    echo "- Install pyenv (recommended to prevent PEP 668)"
   fi
 else
   echo "- Using --break-system-packages flag for pip"
