@@ -1,78 +1,273 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>vmlinuz generic</title>
-    <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #000;
-            overflow: hidden;
-            font-family: monospace;
-        }
-        #enter-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 10;
-            cursor: pointer;
-            color: #fff;
-            font-size: 24px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-        #video-container {
-            width: 100%;
-            height: 100%;
-            display: none;
-        }
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: 0;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>poppy's stuff</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card: #161b22;
+      --card-hover: #1f242c;
+      --text: #c9d1d9;
+      --text-muted: #8b949e;
+      --accent: #58a6ff;
+      --border: #30363d;
+      --modal-overlay: rgba(0, 0, 0, 0.75);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 650px;
+      width: 100%;
+    }
+
+    header {
+      margin-bottom: 2.5rem;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 0.5rem;
+      font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, monospace;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      line-height: 1.6;
+    }
+
+    .projects {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .project-card {
+      background-color: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+      cursor: pointer;
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .project-card:hover {
+      background-color: var(--card-hover);
+      border-color: var(--accent);
+    }
+
+    .project-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 0.35rem;
+    }
+
+    .project-desc {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* Modal Styling */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: var(--modal-overlay);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      padding: 1rem;
+      z-index: 1000;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal {
+      background-color: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      width: 100%;
+      max-width: 480px;
+      padding: 1.5rem;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+    }
+
+    .modal-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.25rem;
+      cursor: pointer;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    .close-btn:hover {
+      color: #ffffff;
+      background-color: var(--border);
+    }
+
+    .modal-options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .option-btn {
+      background-color: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.85rem 1rem;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+      font-family: inherit;
+    }
+
+    .option-btn:hover {
+      border-color: var(--accent);
+      background-color: #12171f;
+    }
+
+    .copied-toast {
+      font-size: 0.8rem;
+      color: #3fb950;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .copied-toast.show {
+      opacity: 1;
+    }
+  </style>
 </head>
 <body>
 
-    <div id="enter-screen">Click to Enter</div>
+  <div class="container">
+    <header>
+      <h1>poppy's stuff</h1>
+      <p class="subtitle">oh, you've stumbled upon one of my sites!</p>
+      <p class="subtitle">welcome, this site is mainly just for hosting projects and whatnot.</p>
+    </header>
 
-    <div id="video-container">
-        <iframe id="player" src="https://www.youtube.com/embed/P92L7OrdbRM?rel=0&enablejsapi=1" allow="accelerometer *; clipboard-write *; encrypted-media *; gyroscope *; picture-in-picture *; web-share *; autoplay *" referrerpolicy="strict-origin" allowfullscreen></iframe>
+    <main class="projects">
+      <div class="project-card" id="mtk-card">
+        <div class="project-title">mtkclient linux installer</div>
+        <div class="project-desc">wanted a simpler way of installing mtkclient? you can click here!</div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">choose a way to run the script</div>
+        <button class="close-btn" id="close-btn">[x]</button>
+      </div>
+      <div class="modal-options">
+        <button class="option-btn" id="open-terminal-btn">
+          <span>[open terminal]</span>
+        </button>
+        <button class="option-btn" id="manual-run-btn">
+          <span>[manual run]</span>
+          <span class="copied-toast" id="copied-toast">copied!</span>
+        </button>
+      </div>
     </div>
+  </div>
 
-    <script>
-        const enterScreen = document.getElementById('enter-screen');
-        const videoContainer = document.getElementById('video-container');
-        const player = document.getElementById('player');
+  <script>
+    const mtkCard = document.getElementById('mtk-card');
+    const modalOverlay = document.getElementById('modal-overlay');
+    const closeBtn = document.getElementById('close-btn');
+    const openTerminalBtn = document.getElementById('open-terminal-btn');
+    const manualRunBtn = document.getElementById('manual-run-btn');
+    const copiedToast = document.getElementById('copied-toast');
 
-        enterScreen.addEventListener('click', () => {
-            enterScreen.style.display = 'none';
-            videoContainer.style.display = 'block';
+    const SCRIPT_CMD = 'curl -sSL https://vmlinuz.co.ke/bash/mtkclient.sh | bash';
 
-            const docElm = document.documentElement;
-            if (docElm.requestFullscreen) {
-                docElm.requestFullscreen();
-            } else if (docElm.mozRequestFullScreen) {
-                docElm.mozRequestFullScreen();
-            } else if (docElm.webkitRequestFullScreen) {
-                docElm.webkitRequestFullScreen();
-            } else if (docElm.msRequestFullscreen) {
-                docElm.msRequestFullscreen();
-            }
+    mtkCard.addEventListener('click', () => {
+      modalOverlay.classList.add('active');
+    });
 
-            player.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
-        });
-    </script>
+    closeBtn.addEventListener('click', () => {
+      modalOverlay.classList.remove('active');
+    });
+
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) {
+        modalOverlay.classList.remove('active');
+      }
+    });
+
+    openTerminalBtn.addEventListener('click', () => {
+      window.location.href = `x-terminal-emulator://run?command=${encodeURIComponent(SCRIPT_CMD)}`;
+      setTimeout(() => {
+        navigator.clipboard.writeText(SCRIPT_CMD);
+      }, 300);
+    });
+
+    manualRunBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(SCRIPT_CMD);
+        copiedToast.classList.add('show');
+        setTimeout(() => {
+          copiedToast.classList.remove('show');
+        }, 2000);
+      } catch (err) {
+        console.error('Failed to copy text: ', err);
+      }
+    });
+  </script>
 </body>
 </html>
