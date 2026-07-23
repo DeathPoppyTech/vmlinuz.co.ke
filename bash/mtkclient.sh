@@ -14,7 +14,101 @@ Hosted on vmlinuz.co.ke by poppy <3
 --------------------------------------------------------------------------------------
 EOF
 
-echo "This script is only for Linux computers, for Windows, please use codefl0w's installer: https://github.com/codefl0w/mtkclient-windows-installer"
+install_desktop_icon() {
+  mkdir -p ~/.local/share/applications
+  
+  DESKTOP_PATH="$HOME/.local/share/applications/mtkclient.desktop"
+  MTK_DIR="$(pwd)"
+  
+  PYTHON_BIN="$(which python3 || which python)"
+  if [ -f "$HOME/.pyenv/shims/python" ]; then
+    PYTHON_BIN="$HOME/.pyenv/shims/python"
+  fi
+
+  ICON_PATH=""
+  if [ -f "$MTK_DIR/Setup/mtkclient.png" ]; then
+    ICON_PATH="$MTK_DIR/Setup/mtkclient.png"
+  elif [ -f "$MTK_DIR/mtkclient/Setup/mtkclient.png" ]; then
+    ICON_PATH="$MTK_DIR/mtkclient/Setup/mtkclient.png"
+  else
+    ICON_PATH="$HOME/.local/share/icons/mtkclient.png"
+    mkdir -p ~/.local/share/icons
+    curl -sSL -o "$ICON_PATH" "https://raw.githubusercontent.com/bkerler/mtkclient/main/Setup/mtkclient.png" || true
+  fi
+
+  cat << EOF > "$DESKTOP_PATH"
+[Desktop Entry]
+Type=Application
+Name=MTK Client GUI
+Exec=bash -c "cd $MTK_DIR && (python mtk_gui || python3 mtk_gui || python3 mtk_gui.py)"
+Icon=$ICON_PATH
+Terminal=true
+Categories=Utility;
+EOF
+
+  chmod +x "$DESKTOP_PATH"
+  gio set "$DESKTOP_PATH" metadata::trusted true 2>/dev/null || true
+  update-desktop-database ~/.local/share/applications 2>/dev/null || true
+  echo "Desktop icon created/repaired successfully at $DESKTOP_PATH"
+}
+
+setup_kamakiri() {
+  echo "Setting up Kamakiri submodules..."
+  if [ -d "mtkclient" ]; then
+    cd mtkclient
+  fi
+  git submodule update --init --recursive
+  echo "Kamakiri setup complete!"
+}
+
+uninstall_mtkclient() {
+  echo "Uninstalling MTKClient..."
+  rm -rf mtkclient
+  rm -f ~/.local/share/applications/mtkclient.desktop
+  rm -f ~/.local/share/icons/mtkclient.png
+  update-desktop-database ~/.local/share/applications 2>/dev/null || true
+  echo "MTKClient successfully uninstalled!"
+  exit 0
+}
+
+if [ -d "mtkclient" ] || command -v mtk_gui &> /dev/null; then
+  echo ""
+  echo "MTKClient is already in your system. What would you like to do?"
+  echo ""
+  echo "[1] Set up Kamakiri"
+  echo "[2] Uninstall MTKClient"
+  echo "[3] Repair/add desktop icon"
+  echo "[4] Reinstall MTKClient"
+  echo ""
+  read -p "Select an option [1-4]: " existing_choice < /dev/tty
+
+  case "$existing_choice" in
+    1)
+      setup_kamakiri
+      exit 0
+      ;;
+    2)
+      uninstall_mtkclient
+      ;;
+    3)
+      if [ -d "mtkclient" ]; then
+        cd mtkclient
+      fi
+      install_desktop_icon
+      exit 0
+      ;;
+    4)
+      echo "Removing previous installation before reinstall..."
+      rm -rf mtkclient
+      ;;
+    *)
+      echo "Invalid option. Exiting."
+      exit 1
+      ;;
+  esac
+fi
+
+echo "This script is only for LInux computers, for Windows, please use codefl0w's installer: https://github.com/codefl0w/mtkclient-windows-installer"
 read -p "Proceed to installation [Y/N]: " choice < /dev/tty
 case "$choice" in 
   y|Y ) ;;
@@ -67,7 +161,7 @@ USE_PYENV=false
 ADD_DESKTOP=false
 USE_KAMAKIRI=false
 
-read -p "Install pyenv (recommended to prevent PEP 668)? [Y/N] (say Y to use existing pyenv): " opt1 < /dev/tty
+read -p "Install pyenv (recommended to prevent PEP 668)? [Y/N]: " opt1 < /dev/tty
 if [[ "$opt1" =~ ^[Yy]$ ]]; then
   USE_PYENV=true
   echo "--> Selected: Install pyenv"
@@ -133,7 +227,7 @@ else
 fi
 
 if [ "$USE_KAMAKIRI" = true ]; then
-  git submodule update --init --recursive
+  setup_kamakiri
 fi
 
 if ls Setup/Linux/*.rules 1> /dev/null 2>&1; then
@@ -145,17 +239,7 @@ sudo udevadm control --reload-rules
 sudo udevadm trigger
 
 if [ "$ADD_DESKTOP" = true ]; then
-  mkdir -p ~/.local/share/applications
-  cat << EOF > ~/.local/share/applications/mtkclient.desktop
-[Desktop Entry]
-Type=Application
-Name=MTK Client GUI
-Exec=python3 $(pwd)/mtk_gui
-Icon=$(pwd)/Setup/mtkclient.png
-Terminal=false
-Categories=Utility;
-EOF
-  chmod +x ~/.local/share/applications/mtkclient.desktop
+  install_desktop_icon
 fi
 
 echo "Installation successfully completed!"
