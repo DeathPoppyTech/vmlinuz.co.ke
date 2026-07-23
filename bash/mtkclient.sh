@@ -132,7 +132,11 @@ if [ "$USE_KAMAKIRI" = true ]; then
   git submodule update --init --recursive
 fi
 
-sudo cp Setup/Linux/50-mtk.rules /etc/udev/rules.d/
+if ls Setup/Linux/*.rules 1> /dev/null 2>&1; then
+  sudo cp Setup/Linux/*.rules /etc/udev/rules.d/
+elif ls Setup/*.rules 1> /dev/null 2>&1; then
+  sudo cp Setup/*.rules /etc/udev/rules.d/
+fi
 sudo udevadm control --reload-rules
 sudo udevadm trigger
 
