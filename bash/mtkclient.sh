@@ -14,7 +14,7 @@ Hosted on vmlinuz.co.ke by poppy <3
 --------------------------------------------------------------------------------------
 EOF
 
-echo "This script is only for LInux computers, for Windows, please use codefl0w's installer: https://github.com/codefl0w/mtkclient-windows-installer"
+echo "This script is only for Linux computers, for Windows, please use codefl0w's installer: https://github.com/codefl0w/mtkclient-windows-installer"
 read -p "Proceed to installation [Y/N]: " choice < /dev/tty
 case "$choice" in 
   y|Y ) ;;
@@ -88,7 +88,11 @@ fi
 echo ""
 echo "The following changes have been added to your config:"
 if [ "$USE_PYENV" = true ]; then
-  echo "- Install pyenv (recommended to prevent PEP 668)"
+  if command -v pyenv &> /dev/null || [ -d "$HOME/.pyenv" ]; then
+    echo "[ PYENV ] Pyenv already in system, skip step !!"
+  else
+    echo "- Install pyenv (recommended to prevent PEP 668) (say Y to use existing pyenv)"
+  fi
 else
   echo "- Using --break-system-packages flag for pip"
 fi
@@ -116,7 +120,7 @@ fi
 cd mtkclient
 
 if [ "$USE_PYENV" = true ]; then
-  if ! command -v pyenv &> /dev/null; then
+  if ! command -v pyenv &> /dev/null && [ ! -d "$HOME/.pyenv" ]; then
     curl https://pyenv.run | bash
   fi
   export PATH="$HOME/.pyenv/bin:$PATH"
