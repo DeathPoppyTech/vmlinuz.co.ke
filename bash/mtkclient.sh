@@ -49,7 +49,14 @@ EOF
   chmod +x "$DESKTOP_PATH"
   gio set "$DESKTOP_PATH" metadata::trusted true 2>/dev/null || true
   update-desktop-database ~/.local/share/applications 2>/dev/null || true
-  echo "Desktop icon created/repaired successfully at $DESKTOP_PATH"
+
+  if [ -d "$HOME/Desktop" ]; then
+    cp ~/.local/share/applications/mtkclient.desktop ~/Desktop/
+    chmod +x ~/Desktop/mtkclient.desktop
+    gio set ~/Desktop/mtkclient.desktop metadata::trusted true 2>/dev/null || true
+  fi
+
+  echo "Desktop icon created/repaired successfully!"
 }
 
 setup_kamakiri() {
@@ -65,6 +72,7 @@ uninstall_mtkclient() {
   echo "Uninstalling MTKClient..."
   rm -rf mtkclient
   rm -f ~/.local/share/applications/mtkclient.desktop
+  rm -f ~/Desktop/mtkclient.desktop
   rm -f ~/.local/share/icons/mtkclient.png
   update-desktop-database ~/.local/share/applications 2>/dev/null || true
   echo "MTKClient successfully uninstalled!"
